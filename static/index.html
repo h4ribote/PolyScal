@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PolyScal - BTC 5m Scalping</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div>
+        <h1>BTC 擬似レート</h1>
+        <p class="subtitle">Binance / Coinbase / Kraken / OKX Median</p>
+      </div>
+      <div class="price-box">
+        <span id="pseudoPrice">--</span>
+        <small id="sourceCount">sources: 0</small>
+      </div>
+    </header>
+
+    <section class="settings-panel">
+      <label for="defaultSize">デフォルト注文サイズ (USD)</label>
+      <input id="defaultSize" type="number" min="1" step="1" value="10" />
+      <button id="refreshBtn">市場更新</button>
+    </section>
+
+    <main>
+      <section>
+        <h2>5分BTCマーケット</h2>
+        <div id="marketBoard" class="market-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>
