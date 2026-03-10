@@ -5,6 +5,8 @@ const defaultSizeEl = document.getElementById('defaultSize');
 const refreshBtnEl = document.getElementById('refreshBtn');
 
 let markets = [];
+const WS_RECONNECT_DELAY_MS = 1500;
+const MARKET_REFRESH_INTERVAL_MS = 5000;
 
 function formatUsd(value) {
   if (value == null || Number.isNaN(Number(value))) return '--';
@@ -108,7 +110,7 @@ function connectPriceSocket() {
   };
 
   ws.onclose = () => {
-    setTimeout(connectPriceSocket, 1500);
+    setTimeout(connectPriceSocket, WS_RECONNECT_DELAY_MS);
   };
 }
 
@@ -134,4 +136,4 @@ refreshBtnEl.addEventListener('click', fetchMarkets);
 
 connectPriceSocket();
 fetchMarkets();
-setInterval(fetchMarkets, 5000);
+setInterval(fetchMarkets, MARKET_REFRESH_INTERVAL_MS);

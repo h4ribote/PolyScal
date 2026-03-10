@@ -20,6 +20,11 @@ class PolyMarketClientError(Exception):
     pass
 
 
+# Polymarket cursor pagination sentinels.
+INITIAL_CURSOR = "MA=="
+END_CURSOR = "LTE="
+
+
 @dataclass
 class MarketView:
     title: str
@@ -56,12 +61,12 @@ class PolymarketClient:
 
     def get_active_5m_btc_markets(self, limit: int = 100) -> list[MarketView]:
         results: list[MarketView] = []
-        cursor = "MA=="
+        cursor = INITIAL_CURSOR
 
         while len(results) < limit:
             payload = self.client.get_simplified_markets(next_cursor=cursor)
             markets = payload.get("data") or []
-            cursor = payload.get("next_cursor", "LTE=")
+            cursor = payload.get("next_cursor", END_CURSOR)
 
             for market in markets:
                 if not self._is_target_market(market):
@@ -70,7 +75,7 @@ class PolymarketClient:
                 if len(results) >= limit:
                     break
 
-            if cursor == "LTE=":
+            if cursor == END_CURSOR:
                 break
 
         return results

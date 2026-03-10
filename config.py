@@ -17,6 +17,14 @@ class Settings:
     polymarket_private_key: str = os.getenv("POLYMARKET_PRIVATE_KEY", "")
     polymarket_signature_type: int = int(os.getenv("POLYMARKET_SIGNATURE_TYPE", "0"))
     polymarket_funder: str = os.getenv("POLYMARKET_FUNDER", "")
+    cors_allow_origins: tuple[str, ...] = tuple(
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ALLOW_ORIGINS",
+            "http://127.0.0.1:8000,http://localhost:8000",
+        ).split(",")
+        if origin.strip()
+    )
 
     binance_ws_url: str = os.getenv("BINANCE_WS_URL", "wss://stream.binance.com:9443/ws/btcusdt@bookTicker")
     coinbase_ws_url: str = os.getenv("COINBASE_WS_URL", "wss://ws-feed.exchange.coinbase.com")

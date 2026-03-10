@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -17,6 +18,8 @@ from price_aggregator import PriceAggregator
 
 
 settings = get_settings()
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 price_aggregator = PriceAggregator(settings)
 polymarket = PolymarketClient(settings)
 
@@ -34,13 +37,13 @@ app = FastAPI(title="PolyScal", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(settings.cors_allow_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="/home/runner/work/PolyScal/PolyScal/static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 class OrderRequest(BaseModel):
@@ -101,4 +104,4 @@ async def ws_price(websocket: WebSocket) -> None:
 
 @app.get("/")
 async def index() -> FileResponse:
-    return FileResponse("/home/runner/work/PolyScal/PolyScal/static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
