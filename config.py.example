@@ -1,0 +1,15 @@
+# Configuration for Polymarket Client
+
+# Polymarket Host URL (e.g. https://clob.polymarket.com)
+HOST = "https://clob.polymarket.com"
+
+# Chain ID (137 for Polygon Mainnet, 80002 for Amoy Testnet)
+CHAIN_ID = 137
+
+# Private key for the account (Starts with 0x)
+PRIVATE_KEY = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+# (Optional) If you have an existing L2 API Key, you can set it here
+# CLOB_API_KEY = "..."
+# CLOB_SECRET = "..."
+# CLOB_PASSPHRASE = "..."

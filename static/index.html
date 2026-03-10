@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket Scalping UI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">Polymarket Scalper</div>
+        <div class="rate-container">
+            <span class="rate-label">BTC/USD (Aggregated)</span>
+            <span id="btc-price" class="rate-value">Loading...</span>
+        </div>
+        <div class="settings">
+            <label for="order-size">Default Order Size (USD): </label>
+            <input type="number" id="order-size" value="10" min="1" step="1">
+        </div>
+    </header>
+
+    <main>
+        <div id="markets-container" class="markets-grid">
+            <!-- Market cards will be injected here via app.js -->
+        </div>
+    </main>
+
+    <!-- Toast container for notifications -->
+    <div id="toast-container"></div>
+
+    <script src="app.js" type="module"></script>
+</body>
+</html>
