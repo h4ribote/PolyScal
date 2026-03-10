@@ -71,7 +71,7 @@ class PolymarketClient:
 
     async def place_buy_order(self, token_id: str, size_usd: float) -> dict[str, Any]:
         if size_usd <= 0:
-            raise ValueError("size must be positive")
+            raise ValueError("size_usd must be positive")
 
         market_args = MarketOrderArgs(
             token_id=token_id,

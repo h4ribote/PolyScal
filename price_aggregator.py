@@ -76,7 +76,13 @@ class PriceAggregator:
             )
 
     async def _update_mid(self, exchange: str, bid: float, ask: float) -> None:
-        if bid <= 0 or ask <= 0:
+        if bid <= 0 or ask <= 0 or ask < bid:
+            logger.debug(
+                "Rejected invalid quote from %s: bid=%s ask=%s",
+                exchange,
+                bid,
+                ask,
+            )
             return
         mid = (bid + ask) / 2.0
 

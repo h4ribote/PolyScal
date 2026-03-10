@@ -12,3 +12,6 @@ PRIVATE_KEY = ""
 # Optional: use a specific funder address/signature type when needed
 FUNDER = None
 SIGNATURE_TYPE = 0
+
+# Allowed CORS origins for frontend access
+ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]

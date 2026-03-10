@@ -12,6 +12,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+try:
+    import config
+except ModuleNotFoundError:
+    config = None
+
 from polymarket_client import PolymarketClient
 from price_aggregator import PriceAggregator
 
@@ -39,9 +44,10 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="PolyScal", lifespan=lifespan)
+allowed_origins = getattr(config, "ALLOWED_ORIGINS", ["http://127.0.0.1:8000", "http://localhost:8000"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
