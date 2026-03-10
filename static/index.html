@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PolyScal</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>BTC 擬似レート</h1>
+      <div id="price" class="price">--</div>
+      <div id="price-meta" class="price-meta">接続待機中...</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel settings">
+        <h2>注文設定</h2>
+        <label for="order-size">デフォルト注文サイズ (USD)</label>
+        <input id="order-size" type="number" min="1" step="1" value="10" />
+        <button id="refresh-markets" class="secondary-btn">市場を更新</button>
+      </section>
+
+      <section class="panel markets">
+        <h2>5分間隔 BTC マーケット</h2>
+        <div id="markets" class="market-grid"></div>
+      </section>
+    </main>
+
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+"""Copy this file to config.py and fill values."""
+
+# Polymarket CLOB API host
+POLYMARKET_HOST = "https://clob.polymarket.com"
+
+# Polygon mainnet chain id for production
+CHAIN_ID = 137
+
+# Wallet private key used for L1 authentication (required)
+PRIVATE_KEY = ""
+
+# Optional: use a specific funder address/signature type when needed
+FUNDER = None
+SIGNATURE_TYPE = 0
+
+# Allowed CORS origins for frontend access
+ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
