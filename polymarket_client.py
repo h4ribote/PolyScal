@@ -36,50 +36,30 @@ def get_client() -> ClobClient:
 client = get_client()
 
 def fetch_active_btc_markets() -> List[Dict[str, Any]]:
-    """Fetches active 5-minute BTC markets using Gamma API /markets/slug/..."""
-    # 1. First we need to find the dynamic slugs for the 5m btc up/down markets.
-    # We query the events API for the btc-up-or-down-5m series.
-    # We pull recent events. We don't filter solely by closed=false because in non-trading hours
-    # there might be 0 active 5m markets. We'll grab the latest 10 to demonstrate the structure.
-    events_url = "https://gamma-api.polymarket.com/events?seriesSlug=btc-up-or-down-5m&limit=10"
-
+    """Fetches exactly 3 BTC Up/Down 5m markets (Past, Current, Future) using timestamps."""
+    import datetime
     try:
-        events_resp = requests.get(events_url)
-        events_resp.raise_for_status()
-        events = events_resp.json()
+        # Determine current UTC time and the start of the current 5-minute interval
+        now = datetime.datetime.now(datetime.timezone.utc)
+        minutes = (now.minute // 5) * 5
+        current_interval = now.replace(minute=minutes, second=0, microsecond=0)
 
-        # Extract the specific market slugs (the 5m markets usually only have one market per event)
-        slugs = []
-        for event in events:
-            if event.get("closed"):
-                continue # We ideally only want unclosed
-
-            # Sometimes events have nested markets, we want the market slug.
-            # Usually for this series, the event slug is similar to the market slug,
-            # or the markets[0] slug is what we need.
-            if "markets" in event and len(event["markets"]) > 0:
-                slugs.append(event["markets"][0].get("slug"))
-            else:
-                slugs.append(event.get("slug"))
-
-        # Fallback to generic btc markets if the 5m series doesn't have active events right now
-        if not slugs:
-            generic_url = "https://gamma-api.polymarket.com/events?closed=false&limit=100"
-            generic_resp = requests.get(generic_url).json()
-            for event in generic_resp:
-                if "BTC" in event.get("title", "") or "Bitcoin" in event.get("title", ""):
-                    if "markets" in event and len(event["markets"]) > 0:
-                        slugs.append(event["markets"][0].get("slug"))
+        # Calculate timestamps for past (-5m), current, and future (+5m)
+        intervals = [
+            current_interval - datetime.timedelta(minutes=5),
+            current_interval,
+            current_interval + datetime.timedelta(minutes=5)
+        ]
 
         btc_markets = []
-
-        # 2. Iterate over the slugs and fetch using the exact requested URL structure
-        for slug in slugs:
-            if not slug: continue
-
+        for interval in intervals:
+            ts = int(interval.timestamp())
+            slug = f"btc-updown-5m-{ts}"
             market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
+
             m_resp = requests.get(market_url)
             if m_resp.status_code != 200:
+                logger.warning(f"Market {slug} not found.")
                 continue
 
             market = m_resp.json()
@@ -114,17 +94,14 @@ def fetch_active_btc_markets() -> List[Dict[str, Any]]:
                 "end_date": market.get("endDate", ""),
                 "condition_id": market.get("conditionId"),
                 "active": market.get("active", False),
-                "closed": market.get("closed", False)
+                "closed": market.get("closed", False),
+                "slug": slug
             })
 
-        # We only return active ones if there are any, else we return all fetched to show the UI
-        active_unclosed_markets = [m for m in btc_markets if m["active"] and not m["closed"]]
-        if active_unclosed_markets:
-            return active_unclosed_markets
         return btc_markets
 
     except Exception as e:
-        logger.error(f"Error fetching active BTC markets: {e}")
+        logger.error(f"Error fetching BTC 5m markets: {e}")
         return []
 
 def place_order(token_id: str, side: str, size: float, price: float = 0.5) -> Dict[str, Any]:
