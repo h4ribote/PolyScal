@@ -1,0 +1,11 @@
+POLYMARKET_HOST=https://clob.polymarket.com
+POLYMARKET_CHAIN_ID=137
+POLYMARKET_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+POLYMARKET_SIGNATURE_TYPE=0
+POLYMARKET_FUNDER=
+CORS_ALLOW_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+
+BINANCE_WS_URL=wss://stream.binance.com:9443/ws/btcusdt@bookTicker
+COINBASE_WS_URL=wss://ws-feed.exchange.coinbase.com
+KRAKEN_WS_URL=wss://ws.kraken.com/v2
+OKX_WS_URL=wss://ws.okx.com:8443/ws/v5/public

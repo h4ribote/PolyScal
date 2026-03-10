@@ -1,0 +1,129 @@
+:root {
+  color-scheme: dark;
+  --bg: #090b10;
+  --panel: #121723;
+  --panel-alt: #191f2f;
+  --text: #edf2ff;
+  --muted: #9ba3be;
+  --yes: #14c47f;
+  --no: #f55f74;
+  --accent: #4d7cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #101826 0%, var(--bg) 45%);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid #26314d;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin: 0;
+}
+
+.price-box {
+  text-align: right;
+}
+
+#pseudoPrice {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.settings-panel {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid #26314d;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+input,
+button {
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid #2f3c5e;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.market-card {
+  background: var(--panel);
+  border: 1px solid #26314d;
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.market-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.market-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.buy-yes,
+.buy-no {
+  font-weight: 700;
+}
+
+.buy-yes {
+  border-color: #1f7d60;
+  background: linear-gradient(180deg, #166248, #124435);
+}
+
+.buy-no {
+  border-color: #8e3550;
+  background: linear-gradient(180deg, #6f2d3f, #4f1d2a);
+}
