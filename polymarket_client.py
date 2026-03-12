@@ -110,15 +110,13 @@ def place_order(token_id: str, side: str, size: float, price: float = 0.5) -> Di
     Since we don't have real funding/matching info, this uses MarketOrderArgs to create FOK.
     """
     try:
-        from py_clob_client.clob_types import MarketOrderArgs
+        from py_clob_client.clob_types import OrderArgs
 
-        # A market order needs size and side. FOK represents Fill-Or-Kill
-        order_args = MarketOrderArgs(
+        order_args = OrderArgs(
             token_id=token_id,
-            amount=size,
+            size=size,
             side=side, # "BUY" or "SELL"
             price=price,
-            order_type="FOK"
         )
 
         # In a real environment with L2 creds, this will sign and post the order
