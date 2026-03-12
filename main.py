@@ -7,22 +7,31 @@ from pydantic import BaseModel
 import logging
 
 from price_aggregator import PriceAggregator
+from polymarket_ws import PolymarketWSAggregator
 from polymarket_client import fetch_active_btc_markets, place_order
 
 logger = logging.getLogger("FastAPI")
 logger.setLevel(logging.INFO)
 
 aggregator = PriceAggregator()
+pm_ws_aggregator = PolymarketWSAggregator()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start the background price aggregator
     logger.info("Starting Price Aggregator background tasks...")
     await aggregator.start()
+
+    logger.info("Starting Polymarket WS Aggregator background tasks...")
+    await pm_ws_aggregator.start()
+
     yield
     # Cleanup on shutdown
     logger.info("Stopping Price Aggregator background tasks...")
     await aggregator.stop()
+
+    logger.info("Stopping Polymarket WS Aggregator background tasks...")
+    await pm_ws_aggregator.stop()
 
 app = FastAPI(title="Polymarket BTC Scalping Client", lifespan=lifespan)
 
@@ -41,11 +50,27 @@ class OrderRequest(BaseModel):
     outcome: str # "YES" or "NO"
     size: float
 
+# Global to keep track of when we last fetched REST markets
+last_market_fetch = 0
+REST_FETCH_INTERVAL = 60 # seconds
+
 @app.get("/api/markets")
 async def get_markets():
     """Fetch active BTC markets."""
-    markets = fetch_active_btc_markets()
-    return markets
+    global last_market_fetch
+    import time
+
+    current_time = time.time()
+    # Update active markets list periodically via REST
+    if current_time - last_market_fetch > REST_FETCH_INTERVAL or not pm_ws_aggregator.active_markets:
+        # We can run this in a thread to avoid blocking the event loop
+        loop = asyncio.get_event_loop()
+        markets = await loop.run_in_executor(None, fetch_active_btc_markets)
+        pm_ws_aggregator.update_markets(markets)
+        last_market_fetch = current_time
+
+    # Return the real-time websocket-backed markets
+    return pm_ws_aggregator.get_markets()
 
 @app.post("/api/order")
 async def create_order(req: OrderRequest):
