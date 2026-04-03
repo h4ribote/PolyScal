@@ -1,3 +1,5 @@
+const MAX_ORDER_AMOUNT = 999999;
+
 const state = {
     markets: [],
     selectedMarket: null,
@@ -14,6 +16,15 @@ function formatUsd(value) {
     return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formatAmount(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '$0';
+    return `$${number.toLocaleString(undefined, {
+        minimumFractionDigits: Number.isInteger(number) ? 0 : 2,
+        maximumFractionDigits: 2
+    })}`;
+}
+
 function formatDate(value) {
     if (!value) return 'No schedule';
     const dt = new Date(value);
@@ -25,13 +36,13 @@ function updateAmount(delta) {
     if (delta === 'max') {
         state.amount = state.balance;
     } else {
-        state.amount = Math.min(999999, Math.max(0, state.amount + Number(delta)));
+        state.amount = Math.min(MAX_ORDER_AMOUNT, Math.max(0, state.amount + Number(delta)));
     }
     renderAmount();
 }
 
 function renderAmount() {
-    document.getElementById('amount-display').innerText = formatUsd(state.amount).replace('.00', '');
+    document.getElementById('amount-display').innerText = formatAmount(state.amount);
 }
 
 function renderActionButton() {

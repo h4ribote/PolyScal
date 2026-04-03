@@ -73,9 +73,24 @@ h1 {
 }
 
 .header-actions {
-    font-size: 1.3rem;
-    letter-spacing: 3px;
+    display: flex;
+    gap: 8px;
     padding-top: 8px;
+}
+
+.icon-btn {
+    border: 1px solid var(--border);
+    background: var(--chip);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.icon-btn:hover {
+    color: #d7e3f0;
+    border-color: #2c3f54;
 }
 
 .price-summary {

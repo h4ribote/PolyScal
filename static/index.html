@@ -17,7 +17,11 @@
                         <p id="market-date" class="subtle">Loading market...</p>
                     </div>
                 </div>
-                <div class="header-actions subtle">&lt;/&gt; &nbsp; ↗ &nbsp; ☆</div>
+                <div class="header-actions subtle" aria-label="Market actions">
+                    <button type="button" class="icon-btn" aria-label="Embed code">&lt;/&gt;</button>
+                    <button type="button" class="icon-btn" aria-label="Share market">↗</button>
+                    <button type="button" class="icon-btn" aria-label="Bookmark market">☆</button>
+                </div>
             </header>
 
             <section class="price-summary">
@@ -72,7 +76,7 @@
             <div class="amount-row">
                 <div>
                     <div class="amount-title">Amount</div>
-                    <div id="balance" class="subtle">Balance $32.58</div>
+                    <div id="balance" class="subtle">Balance --</div>
                 </div>
                 <div id="amount-display" class="amount-value">$0</div>
             </div>
