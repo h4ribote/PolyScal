@@ -14,7 +14,7 @@ const state = {
     priceCount: 0,
     priceWriteIndex: 0,
     countdownSecs: 300,
-    minuteCandles: new Map()
+    minutePrices: new Map()
 };
 
 let chart;
@@ -30,7 +30,7 @@ function createAreaSeriesCompat(chartInstance, options) {
         return chartInstance.addSeries(areaSeriesType, options);
     }
 
-    throw new Error('Area series API is not available in loaded lightweight-charts build.');
+    throw new Error('Area series API is not available. Ensure a compatible lightweight-charts build is loaded.');
 }
 
 function formatUsd(value) {
@@ -199,20 +199,21 @@ function initChart() {
 function pushChartPoint(price) {
     if (!areaSeries) return;
 
-    const minuteStart = Math.floor(Date.now() / 60000) * 60;
-    state.minuteCandles.set(minuteStart, { time: minuteStart, value: price });
+    const nowSec = Math.floor(Date.now() / 1000);
+    const minuteStart = Math.floor(nowSec / 60) * 60;
+    state.minutePrices.set(minuteStart, { time: minuteStart, value: price });
 
-    if (state.minuteCandles.size > CHART_MAX_POINTS) {
-        const oldest = Math.min(...state.minuteCandles.keys());
-        state.minuteCandles.delete(oldest);
+    if (state.minutePrices.size > CHART_MAX_POINTS) {
+        const oldest = Math.min(...state.minutePrices.keys());
+        state.minutePrices.delete(oldest);
     }
 
-    const sortedMinutes = [...state.minuteCandles.keys()].sort((a, b) => a - b);
+    const sortedMinutes = [...state.minutePrices.keys()].sort((a, b) => a - b);
     state.priceCount = Math.min(sortedMinutes.length, CHART_MAX_POINTS);
     state.priceWriteIndex = 0;
 
     sortedMinutes.slice(-CHART_MAX_POINTS).forEach((key, index) => {
-        state.prices[index] = state.minuteCandles.get(key);
+        state.prices[index] = state.minutePrices.get(key);
         state.priceWriteIndex = index + 1;
     });
 
