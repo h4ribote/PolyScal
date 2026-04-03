@@ -1,6 +1,7 @@
 const MAX_ORDER_AMOUNT = 999999;
 const CHART_MAX_POINTS = 240;
 const QUICK_ADD_ALLOWED = new Set(['1', '5', '10', '100', 'max']);
+const TIMELINE_VISIBLE_COUNT = 5;
 
 const state = {
     markets: [],
@@ -12,7 +13,8 @@ const state = {
     prices: new Array(CHART_MAX_POINTS),
     priceCount: 0,
     priceWriteIndex: 0,
-    countdownSecs: 300
+    countdownSecs: 300,
+    minuteCandles: new Map()
 };
 
 let chart;
@@ -94,6 +96,58 @@ function renderHeader() {
     document.getElementById('price-to-beat').innerText = formatUsd(toBeat);
 }
 
+function formatTimelineTime(value) {
+    if (!value) return '--:--';
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return '--:--';
+    return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function getSortedMarkets() {
+    return [...state.markets].sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
+}
+
+function renderTimeline() {
+    const row = document.querySelector('.timeline-row');
+    if (!row) return;
+    row.innerHTML = '';
+
+    const sorted = getSortedMarkets();
+    if (!sorted.length) {
+        const empty = document.createElement('span');
+        empty.className = 'subtle';
+        empty.innerText = 'No active market slots';
+        row.appendChild(empty);
+        return;
+    }
+
+    const selectedIndex = sorted.findIndex((m) => m.condition_id === state.selectedMarket?.condition_id);
+    const anchor = selectedIndex >= 0 ? selectedIndex : 0;
+    const start = Math.max(0, anchor - Math.floor((TIMELINE_VISIBLE_COUNT - 1) / 2));
+    const visible = sorted.slice(start, start + TIMELINE_VISIBLE_COUNT);
+
+    visible.forEach((market) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pill';
+        if (market.condition_id === state.selectedMarket?.condition_id) {
+            btn.classList.add('active');
+        }
+        btn.dataset.conditionId = market.condition_id;
+        btn.setAttribute('aria-label', `Select ${formatTimelineTime(market.end_date)} slot`);
+        btn.innerText = formatTimelineTime(market.end_date);
+        btn.addEventListener('click', () => {
+            state.selectedMarket = market;
+            setCountdownFromMarket();
+            renderHeader();
+            renderOutcomeButtons();
+            renderCountdown();
+            renderTimeline();
+        });
+        row.appendChild(btn);
+    });
+}
+
 function initChart() {
     const container = document.getElementById('price-chart');
     if (!container) return;
@@ -113,7 +167,7 @@ function initChart() {
         timeScale: {
             borderColor: '#1b2a3b',
             timeVisible: true,
-            secondsVisible: true
+            secondsVisible: false
         },
         crosshair: {
             vertLine: { color: '#33506a' },
@@ -145,18 +199,26 @@ function initChart() {
 function pushChartPoint(price) {
     if (!areaSeries) return;
 
-    state.prices[state.priceWriteIndex] = {
-        time: Math.floor(Date.now() / 1000),
-        value: price
-    };
-    state.priceWriteIndex = (state.priceWriteIndex + 1) % CHART_MAX_POINTS;
-    state.priceCount = Math.min(state.priceCount + 1, CHART_MAX_POINTS);
+    const minuteStart = Math.floor(Date.now() / 60000) * 60;
+    state.minuteCandles.set(minuteStart, { time: minuteStart, value: price });
+
+    if (state.minuteCandles.size > CHART_MAX_POINTS) {
+        const oldest = Math.min(...state.minuteCandles.keys());
+        state.minuteCandles.delete(oldest);
+    }
+
+    const sortedMinutes = [...state.minuteCandles.keys()].sort((a, b) => a - b);
+    state.priceCount = Math.min(sortedMinutes.length, CHART_MAX_POINTS);
+    state.priceWriteIndex = 0;
+
+    sortedMinutes.slice(-CHART_MAX_POINTS).forEach((key, index) => {
+        state.prices[index] = state.minuteCandles.get(key);
+        state.priceWriteIndex = index + 1;
+    });
 
     const data = [];
-    const start = state.priceCount === CHART_MAX_POINTS ? state.priceWriteIndex : 0;
     for (let i = 0; i < state.priceCount; i += 1) {
-        const index = (start + i) % CHART_MAX_POINTS;
-        data.push(state.prices[index]);
+        data.push(state.prices[i]);
     }
 
     areaSeries.setData(data);
@@ -226,6 +288,7 @@ async function fetchMarkets() {
         renderOutcomeButtons();
         setCountdownFromMarket();
         renderCountdown();
+        renderTimeline();
     } catch (error) {
         showToast(`Failed to load markets: ${error.message}`, 'error');
     }
