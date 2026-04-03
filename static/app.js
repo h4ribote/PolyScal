@@ -1,5 +1,6 @@
 const MAX_ORDER_AMOUNT = 999999;
 const CHART_MAX_POINTS = 240;
+const QUICK_ADD_ALLOWED = new Set(['1', '5', '10', '100', 'max']);
 
 const state = {
     markets: [],
@@ -8,7 +9,9 @@ const state = {
     outcome: 'UP',
     amount: 0,
     balance: 32.58,
-    prices: [],
+    prices: new Array(CHART_MAX_POINTS),
+    priceCount: 0,
+    priceWriteIndex: 0,
     countdownSecs: 300
 };
 
@@ -123,17 +126,21 @@ function initChart() {
 function pushChartPoint(price) {
     if (!areaSeries) return;
 
-    const point = {
+    state.prices[state.priceWriteIndex] = {
         time: Math.floor(Date.now() / 1000),
         value: price
     };
+    state.priceWriteIndex = (state.priceWriteIndex + 1) % CHART_MAX_POINTS;
+    state.priceCount = Math.min(state.priceCount + 1, CHART_MAX_POINTS);
 
-    if (state.prices.length >= CHART_MAX_POINTS) {
-        state.prices.shift();
+    const data = [];
+    const start = state.priceCount === CHART_MAX_POINTS ? state.priceWriteIndex : 0;
+    for (let i = 0; i < state.priceCount; i += 1) {
+        const index = (start + i) % CHART_MAX_POINTS;
+        data.push(state.prices[index]);
     }
-    state.prices.push(point);
 
-    areaSeries.setData(state.prices);
+    areaSeries.setData(data);
     chart.timeScale().fitContent();
 }
 
@@ -310,6 +317,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.quick-add button').forEach((button) => {
         button.addEventListener('click', () => {
             const inc = button.dataset.inc;
+            if (!QUICK_ADD_ALLOWED.has(inc)) {
+                showToast('Invalid quick amount value.', 'error');
+                return;
+            }
+
             if (inc === 'max') {
                 updateAmount('max');
                 return;
