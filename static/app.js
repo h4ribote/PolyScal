@@ -10,27 +10,24 @@ const state = {
     outcome: 'UP',
     amount: 0,
     balance: 32.58,
-    prices: new Array(CHART_MAX_POINTS),
-    priceCount: 0,
-    priceWriteIndex: 0,
     countdownSecs: 300,
-    minutePrices: new Map()
+    minuteCandles: new Map()
 };
 
 let chart;
-let areaSeries;
+let candleSeries;
 
-function createAreaSeriesCompat(chartInstance, options) {
-    if (typeof chartInstance?.addAreaSeries === 'function') {
-        return chartInstance.addAreaSeries(options);
+function createCandlestickSeriesCompat(chartInstance, options) {
+    if (typeof chartInstance?.addCandlestickSeries === 'function') {
+        return chartInstance.addCandlestickSeries(options);
     }
 
-    const areaSeriesType = window.LightweightCharts?.AreaSeries;
-    if (typeof chartInstance?.addSeries === 'function' && areaSeriesType) {
-        return chartInstance.addSeries(areaSeriesType, options);
+    const candlestickSeriesType = window.LightweightCharts?.CandlestickSeries;
+    if (typeof chartInstance?.addSeries === 'function' && candlestickSeriesType) {
+        return chartInstance.addSeries(candlestickSeriesType, options);
     }
 
-    throw new Error('Area series API is not available. Ensure a compatible lightweight-charts build is loaded.');
+    throw new Error('Candlestick series API is not available. Ensure a compatible lightweight-charts build is loaded.');
 }
 
 function formatUsd(value) {
@@ -175,12 +172,13 @@ function initChart() {
         }
     });
 
-    areaSeries = createAreaSeriesCompat(chart, {
-        lineColor: '#2ce58b',
-        topColor: 'rgba(44, 229, 139, 0.35)',
-        bottomColor: 'rgba(44, 229, 139, 0.04)',
-        lineWidth: 2,
-        priceLineColor: '#2ce58b'
+    candleSeries = createCandlestickSeriesCompat(chart, {
+        upColor: '#2ce58b',
+        borderUpColor: '#2ce58b',
+        wickUpColor: '#2ce58b',
+        downColor: '#ff4f55',
+        borderDownColor: '#ff4f55',
+        wickDownColor: '#ff4f55'
     });
 
     let resizeTimer;
@@ -197,32 +195,36 @@ function initChart() {
 }
 
 function pushChartPoint(price) {
-    if (!areaSeries) return;
+    if (!candleSeries) return;
 
     const nowSec = Math.floor(Date.now() / 1000);
     const minuteStart = Math.floor(nowSec / 60) * 60;
-    state.minutePrices.set(minuteStart, { time: minuteStart, value: price });
-
-    if (state.minutePrices.size > CHART_MAX_POINTS) {
-        const oldest = Math.min(...state.minutePrices.keys());
-        state.minutePrices.delete(oldest);
+    const existing = state.minuteCandles.get(minuteStart);
+    if (existing) {
+        existing.high = Math.max(existing.high, price);
+        existing.low = Math.min(existing.low, price);
+        existing.close = price;
+    } else {
+        state.minuteCandles.set(minuteStart, {
+            time: minuteStart,
+            open: price,
+            high: price,
+            low: price,
+            close: price
+        });
     }
 
-    const sortedMinutes = [...state.minutePrices.keys()].sort((a, b) => a - b);
-    state.priceCount = Math.min(sortedMinutes.length, CHART_MAX_POINTS);
-    state.priceWriteIndex = 0;
-
-    sortedMinutes.slice(-CHART_MAX_POINTS).forEach((key, index) => {
-        state.prices[index] = state.minutePrices.get(key);
-        state.priceWriteIndex = index + 1;
-    });
-
-    const data = [];
-    for (let i = 0; i < state.priceCount; i += 1) {
-        data.push(state.prices[i]);
+    if (state.minuteCandles.size > CHART_MAX_POINTS) {
+        const oldest = Math.min(...state.minuteCandles.keys());
+        state.minuteCandles.delete(oldest);
     }
 
-    areaSeries.setData(data);
+    const data = [...state.minuteCandles.keys()]
+        .sort((a, b) => a - b)
+        .slice(-CHART_MAX_POINTS)
+        .map((key) => state.minuteCandles.get(key));
+
+    candleSeries.setData(data);
     chart.timeScale().fitContent();
 }
 
