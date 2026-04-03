@@ -7,27 +7,90 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <div class="logo">Polymarket Scalper</div>
-        <div class="rate-container">
-            <span class="rate-label">BTC/USD (Aggregated)</span>
-            <span id="btc-price" class="rate-value">Loading...</span>
-        </div>
-        <div class="settings">
-            <label for="order-size">Default Order Size (USD): </label>
-            <input type="number" id="order-size" value="10" min="1" step="1">
-        </div>
-    </header>
+    <div class="app-shell">
+        <section class="market-panel">
+            <header class="market-header">
+                <div class="market-main">
+                    <div class="btc-icon">₿</div>
+                    <div>
+                        <h1 id="market-title">Bitcoin Up or Down - 5 Minutes</h1>
+                        <p id="market-date" class="subtle">Loading market...</p>
+                    </div>
+                </div>
+                <div class="header-actions subtle">&lt;/&gt; &nbsp; ↗ &nbsp; ☆</div>
+            </header>
 
-    <main>
-        <div id="markets-container" class="markets-grid">
-            <!-- Market cards will be injected here via app.js -->
-        </div>
-    </main>
+            <section class="price-summary">
+                <div>
+                    <p class="label">Price To Beat</p>
+                    <p id="price-to-beat" class="price muted">--</p>
+                </div>
+                <div>
+                    <p class="label">Current Price</p>
+                    <p id="btc-price" class="price highlight">Loading...</p>
+                </div>
+                <div class="countdown">
+                    <span id="timer-min">--</span><small>MIN</small>
+                    <span id="timer-sec">--</span><small>SECS</small>
+                </div>
+            </section>
 
-    <!-- Toast container for notifications -->
+            <section class="chart-card">
+                <div id="chart-candles" class="candles"></div>
+                <div id="current-line" class="current-line"></div>
+                <div class="axis-values">
+                    <span id="axis-top">--</span>
+                    <span id="axis-mid">--</span>
+                    <span id="axis-low">--</span>
+                </div>
+            </section>
+
+            <section class="timeline-row">
+                <button class="pill muted-pill">Past</button>
+                <button class="pill active">1:00 AM</button>
+                <button class="pill">1:05 AM</button>
+                <button class="pill">1:10 AM</button>
+                <button class="pill">1:15 AM</button>
+                <button class="pill muted-pill">More</button>
+            </section>
+        </section>
+
+        <aside class="trade-panel">
+            <div class="trade-head">
+                <div class="tab-buttons">
+                    <button id="buy-tab" class="tab active">Buy</button>
+                    <button id="sell-tab" class="tab">Sell</button>
+                </div>
+                <div class="subtle">Market ▾</div>
+            </div>
+
+            <div class="outcome-buttons">
+                <button id="btn-up" class="outcome active-up">Up --¢</button>
+                <button id="btn-down" class="outcome">Down --¢</button>
+            </div>
+
+            <div class="amount-row">
+                <div>
+                    <div class="amount-title">Amount</div>
+                    <div id="balance" class="subtle">Balance $32.58</div>
+                </div>
+                <div id="amount-display" class="amount-value">$0</div>
+            </div>
+
+            <div class="quick-add">
+                <button data-inc="1">+$1</button>
+                <button data-inc="5">+$5</button>
+                <button data-inc="10">+$10</button>
+                <button data-inc="100">+$100</button>
+                <button data-inc="max">Max</button>
+            </div>
+
+            <button id="submit-order" class="submit-btn">Buy Up</button>
+            <p class="terms subtle">By trading, you agree to the <u>Terms of Use</u>.</p>
+        </aside>
+    </div>
+
     <div id="toast-container"></div>
-
     <script src="app.js" type="module"></script>
 </body>
 </html>

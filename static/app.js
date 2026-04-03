@@ -1,143 +1,214 @@
-// WebSocket Connection for Real-time Price
+const state = {
+    markets: [],
+    selectedMarket: null,
+    side: 'BUY',
+    outcome: 'UP',
+    amount: 0,
+    balance: 32.58,
+    prices: [],
+    countdownSecs: 300
+};
+
+function formatUsd(value) {
+    if (value === null || value === undefined || Number.isNaN(value)) return '--';
+    return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function formatDate(value) {
+    if (!value) return 'No schedule';
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return 'No schedule';
+    return dt.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function updateAmount(delta) {
+    if (delta === 'max') {
+        state.amount = state.balance;
+    } else {
+        state.amount = Math.min(999999, Math.max(0, state.amount + Number(delta)));
+    }
+    renderAmount();
+}
+
+function renderAmount() {
+    document.getElementById('amount-display').innerText = formatUsd(state.amount).replace('.00', '');
+}
+
+function renderActionButton() {
+    const btn = document.getElementById('submit-order');
+    btn.innerText = `${state.side === 'BUY' ? 'Buy' : 'Sell'} ${state.outcome}`;
+}
+
+function renderOutcomeButtons() {
+    const up = document.getElementById('btn-up');
+    const down = document.getElementById('btn-down');
+
+    const yes = state.selectedMarket?.yes_price;
+    const no = state.selectedMarket?.no_price;
+
+    up.innerText = `Up ${typeof yes === 'number' ? Math.round(yes * 100) : '--'}¢`;
+    down.innerText = `Down ${typeof no === 'number' ? Math.round(no * 100) : '--'}¢`;
+
+    up.classList.toggle('active-up', state.outcome === 'UP');
+    down.classList.toggle('active-down', state.outcome === 'DOWN');
+}
+
+function renderHeader() {
+    const market = state.selectedMarket;
+    document.getElementById('market-title').innerText = market?.title || 'Bitcoin Up or Down - 5 Minutes';
+    document.getElementById('market-date').innerText = market ? formatDate(market.end_date) : 'No active market';
+    const toBeat = market?.price_to_beat ?? market?.priceToBeat ?? null;
+    document.getElementById('price-to-beat').innerText = formatUsd(toBeat);
+}
+
+function renderChart() {
+    const prices = state.prices.slice(-60);
+    const container = document.getElementById('chart-candles');
+    container.innerHTML = '';
+
+    if (prices.length < 2) return;
+
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const span = Math.max(max - min, 1);
+
+    for (let i = 1; i < prices.length; i += 1) {
+        const prev = prices[i - 1];
+        const cur = prices[i];
+        const height = 10 + ((cur - min) / span) * 82;
+        const el = document.createElement('div');
+        el.className = `candle ${cur >= prev ? 'up' : 'down'}`;
+        el.style.height = `${height}%`;
+        container.appendChild(el);
+    }
+
+    document.getElementById('axis-top').innerText = formatUsd(max);
+    document.getElementById('axis-mid').innerText = formatUsd((max + min) / 2);
+    document.getElementById('axis-low').innerText = formatUsd(min);
+
+    const line = document.getElementById('current-line');
+    const current = prices[prices.length - 1];
+    const normalized = ((current - min) / span) * 100;
+    line.style.top = `${90 - normalized * 0.76}%`;
+}
+
+function setCountdownFromMarket() {
+    const endDate = state.selectedMarket?.end_date;
+    if (!endDate) {
+        state.countdownSecs = 300;
+        return;
+    }
+    const diff = Math.floor((new Date(endDate).getTime() - Date.now()) / 1000);
+    state.countdownSecs = Number.isFinite(diff) ? Math.max(0, diff) : 300;
+}
+
+function renderCountdown() {
+    const min = Math.floor(state.countdownSecs / 60);
+    const sec = state.countdownSecs % 60;
+    document.getElementById('timer-min').innerText = String(min).padStart(2, '0');
+    document.getElementById('timer-sec').innerText = String(sec).padStart(2, '0');
+}
+
 function connectWebSocket() {
-    const wsUrl = `ws://${window.location.host}/ws/price`;
-    const ws = new WebSocket(wsUrl);
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${protocol}://${window.location.host}/ws/price`);
 
     ws.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
-            const priceElement = document.getElementById('btc-price');
-            if (data.price !== "Loading...") {
-                priceElement.innerText = `$${parseFloat(data.price).toFixed(2)}`;
-            } else {
-                priceElement.innerText = data.price;
+            if (data.price === 'Loading...') {
+                return;
             }
+
+            const value = Number(data.price);
+            if (!Number.isFinite(value)) {
+                return;
+            }
+
+            document.getElementById('btc-price').innerText = formatUsd(value);
+            state.prices.push(value);
+            if (state.prices.length > 120) state.prices = state.prices.slice(-120);
+            renderChart();
         } catch (e) {
-            console.error("Error parsing WebSocket message", e);
+            console.error('Error parsing WebSocket message', e);
         }
     };
 
     ws.onclose = () => {
-        console.warn("WebSocket disconnected. Reconnecting in 3s...");
         setTimeout(connectWebSocket, 3000);
-    };
-
-    ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
     };
 }
 
-// Fetch Active Markets via REST API
 async function fetchMarkets() {
     try {
         const response = await fetch('/api/markets');
-        if (!response.ok) throw new Error("Failed to fetch markets");
+        if (!response.ok) throw new Error('Failed to fetch markets');
         const markets = await response.json();
-        renderMarkets(markets);
+        state.markets = Array.isArray(markets) ? markets : [];
+
+        if (!state.markets.length) {
+            state.selectedMarket = null;
+        } else {
+            const keep = state.selectedMarket && state.markets.find((m) => m.condition_id === state.selectedMarket.condition_id);
+            state.selectedMarket = keep || state.markets[0];
+        }
+
+        renderHeader();
+        renderOutcomeButtons();
+        setCountdownFromMarket();
+        renderCountdown();
     } catch (error) {
-        console.error("Error fetching markets:", error);
         showToast(`Failed to load markets: ${error.message}`, 'error');
     }
 }
 
-// Render Markets to the DOM
-function renderMarkets(markets) {
-    const container = document.getElementById('markets-container');
-    container.innerHTML = ''; // Clear existing
-
-    if (markets.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #8b949e;">No active BTC markets found.</div>';
+async function submitOrder() {
+    if (!state.selectedMarket) {
+        showToast('No active market found.', 'error');
         return;
     }
 
-    markets.forEach(market => {
-        const card = document.createElement('div');
-        card.className = 'market-card';
+    if (!state.amount || state.amount <= 0) {
+        showToast('Please set amount first.', 'error');
+        return;
+    }
 
-        // Check if we have token IDs
-        const hasTokens = market.yes_token_id && market.no_token_id;
+    const isUp = state.outcome === 'UP';
+    const tokenId = isUp ? state.selectedMarket.yes_token_id : state.selectedMarket.no_token_id;
 
-        card.innerHTML = `
-            <div class="market-title">${market.title}</div>
-            <div class="market-info">
-                <span>Ends: ${new Date(market.end_date).toLocaleString()}</span>
-                <span>ID: ${market.condition_id ? market.condition_id.substring(0, 8) + '...' : 'N/A'}</span>
-            </div>
-
-            <div class="price-row">
-                <span class="price-label" style="color: var(--success-color);">UP</span>
-                <span class="price-value">$${market.yes_price.toFixed(3)}</span>
-            </div>
-
-            <div class="price-row">
-                <span class="price-label" style="color: var(--danger-color);">DOWN</span>
-                <span class="price-value">$${market.no_price.toFixed(3)}</span>
-            </div>
-
-            <div class="actions">
-                <button class="btn-yes" onclick="placeOrder('${market.yes_token_id}', 'BUY', 'UP')" ${!hasTokens ? 'disabled' : ''}>
-                    Buy UP
-                </button>
-                <button class="btn-no" onclick="placeOrder('${market.no_token_id}', 'BUY', 'DOWN')" ${!hasTokens ? 'disabled' : ''}>
-                    Buy DOWN
-                </button>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-// Place Order via REST API
-window.placeOrder = async function(tokenId, side, outcome) {
     if (!tokenId) {
-        showToast(`Invalid token ID for ${outcome}`, 'error');
+        showToast('Token ID is not available for this market.', 'error');
         return;
     }
 
-    const sizeInput = document.getElementById('order-size').value;
-    const size = parseFloat(sizeInput);
-    if (isNaN(size) || size <= 0) {
-        showToast('Please enter a valid order size.', 'error');
-        return;
-    }
-
-    // Disable all buttons to prevent double click
-    const buttons = document.querySelectorAll('.actions button');
-    buttons.forEach(btn => btn.disabled = true);
-
-    showToast(`Placing order: ${side} ${size} of ${outcome}...`, 'info');
+    const btn = document.getElementById('submit-order');
+    btn.disabled = true;
 
     try {
         const response = await fetch('/api/order', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 token_id: tokenId,
-                side: side,
-                outcome: outcome,
-                size: size
+                side: state.side,
+                outcome: isUp ? 'YES' : 'NO',
+                size: state.amount
             })
         });
 
         const result = await response.json();
-
         if (result.status === 'success') {
-            showToast(`Order placed successfully!`, 'success');
+            showToast('Order placed successfully!', 'success');
         } else {
-            showToast(`Order failed: ${result.message}`, 'error');
+            showToast(`Order failed: ${result.message || 'Unknown error'}`, 'error');
         }
     } catch (error) {
-        console.error("Order error:", error);
         showToast(`Order error: ${error.message}`, 'error');
     } finally {
-        // Re-enable buttons
-        fetchMarkets(); // Refresh data and buttons state
+        btn.disabled = false;
     }
-};
+}
 
-// Simple Toast Notification System
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -157,19 +228,54 @@ function showToast(message, type = 'info') {
     toast.appendChild(closeBtn);
     container.appendChild(toast);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
-        if (toast.parentElement) {
-            toast.remove();
-        }
+        if (toast.parentElement) toast.remove();
     }, 5000);
 }
 
-// Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('buy-tab').addEventListener('click', () => {
+        state.side = 'BUY';
+        document.getElementById('buy-tab').classList.add('active');
+        document.getElementById('sell-tab').classList.remove('active');
+        renderActionButton();
+    });
+
+    document.getElementById('sell-tab').addEventListener('click', () => {
+        state.side = 'SELL';
+        document.getElementById('sell-tab').classList.add('active');
+        document.getElementById('buy-tab').classList.remove('active');
+        renderActionButton();
+    });
+
+    document.getElementById('btn-up').addEventListener('click', () => {
+        state.outcome = 'UP';
+        renderOutcomeButtons();
+        renderActionButton();
+    });
+
+    document.getElementById('btn-down').addEventListener('click', () => {
+        state.outcome = 'DOWN';
+        renderOutcomeButtons();
+        renderActionButton();
+    });
+
+    document.querySelectorAll('.quick-add button').forEach((button) => {
+        button.addEventListener('click', () => {
+            const inc = button.dataset.inc;
+            updateAmount(inc === 'max' ? 'max' : Number(inc));
+        });
+    });
+
+    document.getElementById('submit-order').addEventListener('click', submitOrder);
+    document.getElementById('balance').innerText = `Balance ${formatUsd(state.balance)}`;
+
     connectWebSocket();
     fetchMarkets();
 
-    // Poll for market updates every 5 seconds
     setInterval(fetchMarkets, 5000);
+    setInterval(() => {
+        if (state.countdownSecs > 0) state.countdownSecs -= 1;
+        renderCountdown();
+    }, 1000);
 });
