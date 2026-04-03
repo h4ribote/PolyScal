@@ -128,10 +128,10 @@ function pushChartPoint(price) {
         value: price
     };
 
-    state.prices.push(point);
-    if (state.prices.length > CHART_MAX_POINTS) {
-        state.prices = state.prices.slice(-CHART_MAX_POINTS);
+    if (state.prices.length >= CHART_MAX_POINTS) {
+        state.prices.shift();
     }
+    state.prices.push(point);
 
     areaSeries.setData(state.prices);
     chart.timeScale().fitContent();
@@ -310,7 +310,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.quick-add button').forEach((button) => {
         button.addEventListener('click', () => {
             const inc = button.dataset.inc;
-            updateAmount(inc === 'max' ? 'max' : Number(inc));
+            if (inc === 'max') {
+                updateAmount('max');
+                return;
+            }
+
+            const parsedInc = Number(inc);
+            if (!Number.isFinite(parsedInc)) {
+                showToast('Invalid quick amount value.', 'error');
+                return;
+            }
+
+            updateAmount(parsedInc);
         });
     });
 
