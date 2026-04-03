@@ -43,7 +43,9 @@ function updateAmount(delta) {
     if (delta === 'max') {
         state.amount = state.balance;
     } else {
-        state.amount = Math.min(MAX_ORDER_AMOUNT, Math.max(0, state.amount + Number(delta)));
+        const numericDelta = Number(delta);
+        if (!Number.isFinite(numericDelta) || numericDelta < 0) return;
+        state.amount = Math.min(MAX_ORDER_AMOUNT, Math.max(0, state.amount + numericDelta));
     }
     renderAmount();
 }
@@ -114,12 +116,16 @@ function initChart() {
         priceLineColor: '#2ce58b'
     });
 
+    let resizeTimer;
     window.addEventListener('resize', () => {
         if (!chart) return;
-        chart.applyOptions({
-            width: container.clientWidth,
-            height: container.clientHeight
-        });
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            chart.applyOptions({
+                width: container.clientWidth,
+                height: container.clientHeight
+            });
+        }, 150);
     });
 }
 
