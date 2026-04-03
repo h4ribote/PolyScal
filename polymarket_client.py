@@ -110,8 +110,6 @@ def place_order(token_id: str, side: str, size: float, price: float = 0.5) -> Di
     Since we don't have real funding/matching info, this uses MarketOrderArgs to create FOK.
     """
     try:
-        from py_clob_client.clob_types import OrderArgs
-
         order_args = OrderArgs(
             token_id=token_id,
             size=size,
