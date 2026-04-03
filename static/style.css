@@ -145,62 +145,11 @@ h1 {
     overflow: hidden;
 }
 
-.chart-card::before {
-    content: "";
+.price-chart {
     position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(47, 71, 97, 0.38) 0px,
-        rgba(47, 71, 97, 0.38) 1px,
-        transparent 1px,
-        transparent 50px
-    );
-    pointer-events: none;
-}
-
-.candles {
-    position: absolute;
-    inset: 12px 64px 28px 16px;
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(6px, 1fr);
-    gap: 3px;
-    align-items: end;
-}
-
-.candle {
-    width: 100%;
-    border-radius: 2px;
-    min-height: 8px;
-}
-
-.candle.up {
-    background: linear-gradient(180deg, #2ce58b, #18b96c);
-}
-
-.candle.down {
-    background: linear-gradient(180deg, #ff6a6a, #e14545);
-}
-
-.current-line {
-    position: absolute;
-    left: 16px;
-    right: 64px;
-    top: 52%;
-    border-top: 1px dashed rgba(41, 219, 141, 0.95);
-}
-
-.axis-values {
-    position: absolute;
-    right: 14px;
-    top: 16px;
-    bottom: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    color: #8193a7;
-    font-variant-numeric: tabular-nums;
+    inset: 10px;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .timeline-row {

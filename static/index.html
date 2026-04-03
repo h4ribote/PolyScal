@@ -40,13 +40,7 @@
             </section>
 
             <section class="chart-card">
-                <div id="chart-candles" class="candles"></div>
-                <div id="current-line" class="current-line"></div>
-                <div class="axis-values">
-                    <span id="axis-top">--</span>
-                    <span id="axis-mid">--</span>
-                    <span id="axis-low">--</span>
-                </div>
+                <div id="price-chart" class="price-chart" aria-label="BTC price chart"></div>
             </section>
 
             <section class="timeline-row">
@@ -95,6 +89,7 @@
     </div>
 
     <div id="toast-container"></div>
+    <script src="https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <script src="app.js" type="module"></script>
 </body>
 </html>

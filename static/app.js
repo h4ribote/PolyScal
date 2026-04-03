@@ -1,6 +1,5 @@
 const MAX_ORDER_AMOUNT = 999999;
-const CHART_LINE_TOP_BASE = 90;
-const CHART_LINE_SCALE_FACTOR = 0.76;
+const CHART_MAX_POINTS = 240;
 
 const state = {
     markets: [],
@@ -12,6 +11,9 @@ const state = {
     prices: [],
     countdownSecs: 300
 };
+
+let chart;
+let areaSeries;
 
 function formatUsd(value) {
     if (value === null || value === undefined || Number.isNaN(value)) return '--';
@@ -74,35 +76,65 @@ function renderHeader() {
     document.getElementById('price-to-beat').innerText = formatUsd(toBeat);
 }
 
-function renderChart() {
-    const prices = state.prices.slice(-60);
-    const container = document.getElementById('chart-candles');
-    container.innerHTML = '';
+function initChart() {
+    const container = document.getElementById('price-chart');
+    if (!container) return;
 
-    if (prices.length < 2) return;
+    chart = window.LightweightCharts.createChart(container, {
+        layout: {
+            background: { color: '#0b1623' },
+            textColor: '#8fa1b6'
+        },
+        grid: {
+            vertLines: { color: '#1b2a3b' },
+            horzLines: { color: '#1b2a3b' }
+        },
+        rightPriceScale: {
+            borderColor: '#1b2a3b'
+        },
+        timeScale: {
+            borderColor: '#1b2a3b',
+            timeVisible: true,
+            secondsVisible: true
+        },
+        crosshair: {
+            vertLine: { color: '#33506a' },
+            horzLine: { color: '#33506a' }
+        }
+    });
 
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    const span = Math.max(max - min, 1);
+    areaSeries = chart.addAreaSeries({
+        lineColor: '#2ce58b',
+        topColor: 'rgba(44, 229, 139, 0.35)',
+        bottomColor: 'rgba(44, 229, 139, 0.04)',
+        lineWidth: 2,
+        priceLineColor: '#2ce58b'
+    });
 
-    for (let i = 1; i < prices.length; i += 1) {
-        const prev = prices[i - 1];
-        const cur = prices[i];
-        const height = 10 + ((cur - min) / span) * 82;
-        const el = document.createElement('div');
-        el.className = `candle ${cur >= prev ? 'up' : 'down'}`;
-        el.style.height = `${height}%`;
-        container.appendChild(el);
+    window.addEventListener('resize', () => {
+        if (!chart) return;
+        chart.applyOptions({
+            width: container.clientWidth,
+            height: container.clientHeight
+        });
+    });
+}
+
+function pushChartPoint(price) {
+    if (!areaSeries) return;
+
+    const point = {
+        time: Math.floor(Date.now() / 1000),
+        value: price
+    };
+
+    state.prices.push(point);
+    if (state.prices.length > CHART_MAX_POINTS) {
+        state.prices = state.prices.slice(-CHART_MAX_POINTS);
     }
 
-    document.getElementById('axis-top').innerText = formatUsd(max);
-    document.getElementById('axis-mid').innerText = formatUsd((max + min) / 2);
-    document.getElementById('axis-low').innerText = formatUsd(min);
-
-    const line = document.getElementById('current-line');
-    const current = prices[prices.length - 1];
-    const normalized = ((current - min) / span) * 100;
-    line.style.top = `${CHART_LINE_TOP_BASE - normalized * CHART_LINE_SCALE_FACTOR}%`;
+    areaSeries.setData(state.prices);
+    chart.timeScale().fitContent();
 }
 
 function setCountdownFromMarket() {
@@ -139,9 +171,7 @@ function connectWebSocket() {
             }
 
             document.getElementById('btc-price').innerText = formatUsd(value);
-            state.prices.push(value);
-            if (state.prices.length > 120) state.prices = state.prices.slice(-120);
-            renderChart();
+            pushChartPoint(value);
         } catch (e) {
             console.error('Error parsing WebSocket message', e);
         }
@@ -287,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('submit-order').addEventListener('click', submitOrder);
     document.getElementById('balance').innerText = `Balance ${formatUsd(state.balance)}`;
 
+    initChart();
     connectWebSocket();
     fetchMarkets();
 
