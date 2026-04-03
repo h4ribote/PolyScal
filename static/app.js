@@ -41,7 +41,7 @@ function formatDate(value) {
 
 function updateAmount(delta) {
     if (delta === 'max') {
-        state.amount = state.balance;
+        state.amount = Math.min(MAX_ORDER_AMOUNT, Math.max(0, Number(state.balance) || 0));
     } else {
         const numericDelta = Number(delta);
         if (!Number.isFinite(numericDelta) || numericDelta < 0) return;
