@@ -18,6 +18,19 @@ const state = {
 let chart;
 let areaSeries;
 
+function createAreaSeriesCompat(chartInstance, options) {
+    if (typeof chartInstance?.addAreaSeries === 'function') {
+        return chartInstance.addAreaSeries(options);
+    }
+
+    const areaSeriesType = window.LightweightCharts?.AreaSeries;
+    if (typeof chartInstance?.addSeries === 'function' && areaSeriesType) {
+        return chartInstance.addSeries(areaSeriesType, options);
+    }
+
+    throw new Error('Area series API is not available in loaded lightweight-charts build.');
+}
+
 function formatUsd(value) {
     if (value === null || value === undefined || Number.isNaN(value)) return '--';
     return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -108,7 +121,7 @@ function initChart() {
         }
     });
 
-    areaSeries = chart.addAreaSeries({
+    areaSeries = createAreaSeriesCompat(chart, {
         lineColor: '#2ce58b',
         topColor: 'rgba(44, 229, 139, 0.35)',
         bottomColor: 'rgba(44, 229, 139, 0.04)',
