@@ -57,7 +57,7 @@ function renderHeader() {
     const market = state.selectedMarket;
     document.getElementById('market-title').innerText = market?.title || 'Bitcoin Up or Down - 5 Minutes';
     document.getElementById('market-date').innerText = market ? formatDate(market.end_date) : 'No active market';
-    const toBeat = market?.price_to_beat ?? market?.priceToBeat ?? null;
+    const toBeat = market?.price_to_beat ?? null;
     document.getElementById('price-to-beat').innerText = formatUsd(toBeat);
 }
 
@@ -191,7 +191,7 @@ async function submitOrder() {
             body: JSON.stringify({
                 token_id: tokenId,
                 side: state.side,
-                outcome: isUp ? 'YES' : 'NO',
+                outcome: state.outcome,
                 size: state.amount
             })
         });
