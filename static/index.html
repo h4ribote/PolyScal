@@ -50,27 +50,27 @@
             </section>
 
             <section class="timeline-row">
-                <button class="pill muted-pill">Past</button>
-                <button class="pill active">1:00 AM</button>
-                <button class="pill">1:05 AM</button>
-                <button class="pill">1:10 AM</button>
-                <button class="pill">1:15 AM</button>
-                <button class="pill muted-pill">More</button>
+                <button type="button" class="pill muted-pill" aria-label="Show past markets">Past</button>
+                <button type="button" class="pill active" aria-label="Select 1:00 AM slot">1:00 AM</button>
+                <button type="button" class="pill" aria-label="Select 1:05 AM slot">1:05 AM</button>
+                <button type="button" class="pill" aria-label="Select 1:10 AM slot">1:10 AM</button>
+                <button type="button" class="pill" aria-label="Select 1:15 AM slot">1:15 AM</button>
+                <button type="button" class="pill muted-pill" aria-label="Show more time slots">More</button>
             </section>
         </section>
 
         <aside class="trade-panel">
             <div class="trade-head">
                 <div class="tab-buttons">
-                    <button id="buy-tab" class="tab active">Buy</button>
-                    <button id="sell-tab" class="tab">Sell</button>
+                    <button type="button" id="buy-tab" class="tab active" role="tab" aria-selected="true">Buy</button>
+                    <button type="button" id="sell-tab" class="tab" role="tab" aria-selected="false">Sell</button>
                 </div>
                 <div class="subtle">Market ▾</div>
             </div>
 
             <div class="outcome-buttons">
-                <button id="btn-up" class="outcome active-up">Up --¢</button>
-                <button id="btn-down" class="outcome">Down --¢</button>
+                <button type="button" id="btn-up" class="outcome active-up" aria-label="Select Up outcome">Up --¢</button>
+                <button type="button" id="btn-down" class="outcome" aria-label="Select Down outcome">Down --¢</button>
             </div>
 
             <div class="amount-row">

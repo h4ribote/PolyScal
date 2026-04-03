@@ -1,4 +1,6 @@
 const MAX_ORDER_AMOUNT = 999999;
+const CHART_LINE_TOP_BASE = 90;
+const CHART_LINE_SCALE_FACTOR = 0.76;
 
 const state = {
     markets: [],
@@ -100,7 +102,7 @@ function renderChart() {
     const line = document.getElementById('current-line');
     const current = prices[prices.length - 1];
     const normalized = ((current - min) / span) * 100;
-    line.style.top = `${90 - normalized * 0.76}%`;
+    line.style.top = `${CHART_LINE_TOP_BASE - normalized * CHART_LINE_SCALE_FACTOR}%`;
 }
 
 function setCountdownFromMarket() {
@@ -249,6 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.side = 'BUY';
         document.getElementById('buy-tab').classList.add('active');
         document.getElementById('sell-tab').classList.remove('active');
+        document.getElementById('buy-tab').setAttribute('aria-selected', 'true');
+        document.getElementById('sell-tab').setAttribute('aria-selected', 'false');
         renderActionButton();
     });
 
@@ -256,6 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.side = 'SELL';
         document.getElementById('sell-tab').classList.add('active');
         document.getElementById('buy-tab').classList.remove('active');
+        document.getElementById('sell-tab').setAttribute('aria-selected', 'true');
+        document.getElementById('buy-tab').setAttribute('aria-selected', 'false');
         renderActionButton();
     });
 
